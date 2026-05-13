@@ -1,4 +1,4 @@
-name: React CI
+name: React CI/CD
 
 on:
   push:
@@ -6,14 +6,55 @@ on:
       - main
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: npm install
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Run Build
-        run: npm run build
+      - run: npm install
+
+      - run: npm run lint
+
+  test:
+    needs: lint
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - run: npm install
+
+      - run: npm run build
+
+  deploy:
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+
+      - run: npm run build
+
+      - name: Deploy
+        run: echo "Deploying app..."
